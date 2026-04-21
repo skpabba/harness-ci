@@ -1,0 +1,70 @@
+pipeline:
+  name: Java Hello World CI
+  identifier: Java_Hello_World_CI
+  orgIdentifier: <+YOUR_ORG_IDENTIFIER>        # e.g. default
+  projectIdentifier: <+YOUR_PROJECT_IDENTIFIER> # e.g. myproject
+  tags: {}
+  properties:
+    ci:
+      codebase:
+        connectorRef: <+YOUR_GITHUB_CONNECTOR>  # GitHub connector ref
+        repoName: <+YOUR_GITHUB_REPO>           # e.g. myusername/hello-world
+        build:
+          type: branch
+          spec:
+            branch: main
+  stages:
+    - stage:
+        name: Build Test Push
+        identifier: Build_Test_Push
+        type: CI
+        spec:
+          cloneCodebase: true
+          infrastructure:
+            type: KubernetesDirect
+            spec:
+              connectorRef: <+YOUR_K8S_CONNECTOR>  # K8s connector ref (Account-level delegate)
+              namespace: harness-delegate            # namespace where your delegate runs
+              automountServiceAccountToken: true
+              nodeSelector: {}
+              os: Linux
+          execution:
+            steps:
+              - step:
+                  type: Run
+                  name: Compile
+                  identifier: Compile
+                  spec:
+                    connectorRef: <+YOUR_DOCKERHUB_CONNECTOR>
+                    image: maven:3.8.6-openjdk-11
+                    shell: Sh
+                    command: mvn compile -q
+
+              - step:
+                  type: Run
+                  name: Test
+                  identifier: Test
+                  spec:
+                    connectorRef: <+YOUR_DOCKERHUB_CONNECTOR>
+                    image: maven:3.8.6-openjdk-11
+                    shell: Sh
+                    command: mvn test
+                    reports:
+                      type: JUnit
+                      spec:
+                        paths:
+                          - "target/surefire-reports/**/*.xml"
+
+              - step:
+                  type: BuildAndPushDockerRegistry
+                  name: Build and Push to DockerHub
+                  identifier: Build_and_Push
+                  spec:
+                    connectorRef: <+YOUR_DOCKERHUB_CONNECTOR>
+                    repo: <+YOUR_DOCKERHUB_USERNAME>/hello-world-java
+                    tags:
+                      - latest
+                      - <+pipeline.sequenceId>
+                    dockerfile: Dockerfile
+                    context: .
+                    optimize: true
