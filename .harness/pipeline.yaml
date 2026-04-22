@@ -7,7 +7,7 @@ pipeline:
   properties:
     ci:
       codebase:
-        connectorRef: skpabbaGitHub  # GitHub connector ref
+        connectorRef: account.skpabbaGitHub  # GitHub connector ref
         repoName: skpabba/harness-ci           # e.g. myusername/hello-world
         build:
           type: branch
@@ -23,7 +23,7 @@ pipeline:
           infrastructure:
             type: KubernetesDirect
             spec:
-              connectorRef: minikubeskpabba  # K8s connector ref (Account-level delegate)
+              connectorRef: account.minikubeskpabba  # K8s connector ref (Account-level delegate)
               namespace: harness-delegate            # namespace where your delegate runs
               automountServiceAccountToken: true
               nodeSelector: {}
@@ -35,7 +35,7 @@ pipeline:
                   name: Compile
                   identifier: Compile
                   spec:
-                    connectorRef: Docker_Registry_SKPabba
+                    connectorRef: account.Docker_Registry_SKPabba
                     image: maven:3.8.6-openjdk-11
                     shell: Sh
                     command: mvn compile -q
@@ -60,7 +60,7 @@ pipeline:
                   name: Build and Push to DockerHub
                   identifier: Build_and_Push
                   spec:
-                    connectorRef: Docker_Registry_SKPabba
+                    connectorRef: account.Docker_Registry_SKPabba
                     repo: skpabba/hello-world-java
                     tags:
                       - latest
