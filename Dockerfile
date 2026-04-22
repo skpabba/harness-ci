@@ -5,7 +5,7 @@ RUN mvn dependency:go-offline -q
 COPY src ./src
 RUN mvn package -DskipTests -q
 
-FROM openjdk:11-jre-slim
+FROM eclipse-temurin:11-jre-jammy
 WORKDIR /app
 COPY --from=build /app/target/hello-world.jar app.jar
 ENTRYPOINT ["java", "-jar", "app.jar"]
