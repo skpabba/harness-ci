@@ -1,14 +1,14 @@
 pipeline:
   name: Java Hello World CI
   identifier: Java_Hello_World_CI
-  orgIdentifier: default        # e.g. default
-  projectIdentifier: default_project # e.g. myproject
+  orgIdentifier: default
+  projectIdentifier: default_project
   tags: {}
   properties:
     ci:
       codebase:
-        connectorRef: account.skpabbaGitHub  # GitHub connector ref
-        repoName: harness-ci           # e.g. myusername/hello-world
+        connectorRef: account.skpabbaGitHub
+        repoName: harness-ci
         build:
           type: branch
           spec:
@@ -23,8 +23,8 @@ pipeline:
           infrastructure:
             type: KubernetesDirect
             spec:
-              connectorRef: account.minikubeskpabba  # K8s connector ref (Account-level delegate)
-              namespace: harness-delegate            # namespace where your delegate runs
+              connectorRef: account.minikubeskpabba
+              namespace: harness-delegate
               automountServiceAccountToken: true
               nodeSelector: {}
               os: Linux
@@ -39,7 +39,6 @@ pipeline:
                     image: maven:3.9-eclipse-temurin-17
                     shell: Sh
                     command: mvn compile -q
-
               - step:
                   type: Run
                   name: Test
@@ -54,7 +53,6 @@ pipeline:
                       spec:
                         paths:
                           - "target/surefire-reports/**/*.xml"
-
               - step:
                   type: BuildAndPushDockerRegistry
                   name: Build and Push to DockerHub
@@ -68,3 +66,56 @@ pipeline:
                     dockerfile: Dockerfile
                     context: .
                     optimize: true
+    - stage:
+        name: Deploy to K8s
+        identifier: Deploy_to_K8s
+        type: Deployment
+        spec:
+          deploymentType: Kubernetes
+          service:
+            serviceDefinition:
+              type: Kubernetes
+              spec:
+                manifests:
+                  - manifest:
+                      identifier: k8s_manifests
+                      type: K8sManifest
+                      spec:
+                        store:
+                          type: Github
+                          spec:
+                            connectorRef: account.skpabbaGitHub
+                            gitFetchType: Branch
+                            branch: main
+                            paths:
+                              - k8s/
+                artifacts:
+                  primary:
+                    primaryArtifactRef: hello_world_docker
+                    sources:
+                      - identifier: hello_world_docker
+                        type: DockerRegistry
+                        spec:
+                          connectorRef: account.Docker_Registry_SKPabba
+                          imagePath: skpabba/hello-world-java
+                          tag: <+pipeline.sequenceId>
+          environment:
+            environmentRef: minikube
+            deployToAll: false
+            infrastructureDefinitions:
+              - identifier: minikube_infra
+          execution:
+            steps:
+              - step:
+                  type: K8sRollingDeploy
+                  name: Rolling Deploy
+                  identifier: Rolling_Deploy
+                  spec:
+                    skipDryRun: false
+                    pruningEnabled: false
+            rollbackSteps:
+              - step:
+                  type: K8sRollingRollback
+                  name: Rolling Rollback
+                  identifier: Rolling_Rollback
+                  spec: {}
