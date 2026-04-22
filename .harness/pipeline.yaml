@@ -80,33 +80,6 @@ pipeline:
           deploymentType: Kubernetes
           service:
             serviceRef: hello_world
-            serviceInputs:
-              serviceDefinition:
-                type: Kubernetes
-                spec:
-                  manifests:
-                    - manifest:
-                        identifier: k8s_manifests
-                        type: K8sManifest
-                        spec:
-                          store:
-                            type: Github
-                            spec:
-                              connectorRef: account.skpabbaGitHub
-                              gitFetchType: Branch
-                              branch: main
-                              paths:
-                                - k8s/
-                  artifacts:
-                    primary:
-                      primaryArtifactRef: hello_world_docker
-                      sources:
-                        - identifier: hello_world_docker
-                          type: DockerRegistry
-                          spec:
-                            connectorRef: account.Docker_Registry_SKPabba
-                            imagePath: skpabba/hello-world-java
-                            tag: <+pipeline.sequenceId>
           environment:
             environmentRef: minikube
             deployToAll: false
@@ -114,14 +87,38 @@ pipeline:
               - identifier: minikube_infra
           execution:
             steps:
+              - stepGroup:
+                  name: Canary Deployment
+                  identifier: Canary_Deployment
+                  steps:
+                    - step:
+                        type: K8sCanaryDeploy
+                        name: Canary Deploy
+                        identifier: Canary_Deploy
+                        spec:
+                          instanceSelection:
+                            type: Count
+                            spec:
+                              count: 1
+                          skipDryRun: false
+                    - step:
+                        type: K8sCanaryDelete
+                        name: Canary Delete
+                        identifier: Canary_Delete
+                        spec: {}
               - step:
                   type: K8sRollingDeploy
-                  name: Rolling Deploy
-                  identifier: Rolling_Deploy
+                  name: Primary Deploy
+                  identifier: Primary_Deploy
                   spec:
                     skipDryRun: false
                     pruningEnabled: false
             rollbackSteps:
+              - step:
+                  type: K8sCanaryDelete
+                  name: Canary Delete Rollback
+                  identifier: Canary_Delete_Rollback
+                  spec: {}
               - step:
                   type: K8sRollingRollback
                   name: Rolling Rollback
