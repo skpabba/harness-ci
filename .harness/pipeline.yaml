@@ -83,8 +83,8 @@ pipeline:
           environment:
             environmentRef: minikube
             deployToAll: false
-            infrastructureDefinitions:
-              - identifier: minikube_infra
+            infrastructureDefinition:
+              identifier: minikube_infra
           execution:
             steps:
               - stepGroup:
