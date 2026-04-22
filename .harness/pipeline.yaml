@@ -1,14 +1,14 @@
 pipeline:
   name: Java Hello World CI
   identifier: Java_Hello_World_CI
-  orgIdentifier: default
-  projectIdentifier: default_project
+  orgIdentifier: default        # e.g. default
+  projectIdentifier: default_project # e.g. myproject
   tags: {}
   properties:
     ci:
       codebase:
-        connectorRef: account.skpabbaGitHub
-        repoName: harness-ci
+        connectorRef: account.skpabbaGitHub  # GitHub connector ref
+        repoName: harness-ci           # e.g. myusername/hello-world
         build:
           type: branch
           spec:
@@ -23,8 +23,8 @@ pipeline:
           infrastructure:
             type: KubernetesDirect
             spec:
-              connectorRef: account.minikubeskpabba
-              namespace: harness-delegate
+              connectorRef: account.minikubeskpabba  # K8s connector ref (Account-level delegate)
+              namespace: harness-delegate            # namespace where your delegate runs
               automountServiceAccountToken: true
               nodeSelector: {}
               os: Linux
@@ -39,6 +39,7 @@ pipeline:
                     image: maven:3.8.6-openjdk-11
                     shell: Sh
                     command: mvn compile -q
+
               - step:
                   type: Run
                   name: Test
@@ -53,6 +54,7 @@ pipeline:
                       spec:
                         paths:
                           - "target/surefire-reports/**/*.xml"
+
               - step:
                   type: BuildAndPushDockerRegistry
                   name: Build and Push to DockerHub
