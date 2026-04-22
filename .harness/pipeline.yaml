@@ -81,10 +81,10 @@ pipeline:
           service:
             serviceRef: hello_world
           environment:
-            environmentRef: minikube
+            environmentRef: Dev
             deployToAll: false
             infrastructureDefinition:
-              identifier: minikube_infra
+              identifier: devinfra
           execution:
             steps:
               - stepGroup:
