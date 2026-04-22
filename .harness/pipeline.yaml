@@ -70,35 +70,43 @@ pipeline:
         name: Deploy to K8s
         identifier: Deploy_to_K8s
         type: Deployment
+        failureStrategies:
+          - onFailure:
+              errors:
+                - AllErrors
+              action:
+                type: StageRollback
         spec:
           deploymentType: Kubernetes
           service:
-            serviceDefinition:
-              type: Kubernetes
-              spec:
-                manifests:
-                  - manifest:
-                      identifier: k8s_manifests
-                      type: K8sManifest
-                      spec:
-                        store:
-                          type: Github
-                          spec:
-                            connectorRef: account.skpabbaGitHub
-                            gitFetchType: Branch
-                            branch: main
-                            paths:
-                              - k8s/
-                artifacts:
-                  primary:
-                    primaryArtifactRef: hello_world_docker
-                    sources:
-                      - identifier: hello_world_docker
-                        type: DockerRegistry
+            serviceRef: hello_world
+            serviceInputs:
+              serviceDefinition:
+                type: Kubernetes
+                spec:
+                  manifests:
+                    - manifest:
+                        identifier: k8s_manifests
+                        type: K8sManifest
                         spec:
-                          connectorRef: account.Docker_Registry_SKPabba
-                          imagePath: skpabba/hello-world-java
-                          tag: <+pipeline.sequenceId>
+                          store:
+                            type: Github
+                            spec:
+                              connectorRef: account.skpabbaGitHub
+                              gitFetchType: Branch
+                              branch: main
+                              paths:
+                                - k8s/
+                  artifacts:
+                    primary:
+                      primaryArtifactRef: hello_world_docker
+                      sources:
+                        - identifier: hello_world_docker
+                          type: DockerRegistry
+                          spec:
+                            connectorRef: account.Docker_Registry_SKPabba
+                            imagePath: skpabba/hello-world-java
+                            tag: <+pipeline.sequenceId>
           environment:
             environmentRef: minikube
             deployToAll: false
