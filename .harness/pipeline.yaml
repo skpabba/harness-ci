@@ -8,7 +8,7 @@ pipeline:
     ci:
       codebase:
         connectorRef: account.skpabbaGitHub
-        repoName: skpabba/harness-ci
+        repoName: harness-ci
         build:
           type: branch
           spec:
